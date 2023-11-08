@@ -1,196 +1,243 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
-#include <SDL2/SDL.h>
-#include <GL/gl.h>
-#include <SDL2/SDL_image.h>
-
-//gcc -o main2 main2.c `pkg-config --cflags --libs` SDL2_image -lGL
-//gcc -o main2 main2.c `sdl2-config --cflags --libs` -lSDL2_image -lGL
-//gcc -g -o main2 main2.c `sdl2-config --cflags --libs` -lSDL2_image -lGL
 
 
+/*
+Para gerenciar a Pokedex, defina uma estrutura Pokémon contendo: XXX. Deverá permitir cadastrar
+(inserir/listar/pesquisar/alterar/excluir) os Pokémons disponíveis para serem capturados.
+Essa relação deve aumentar e diminuir dinamicamente.
+*/
 
-int main(int argc, char* argv[]){
+typedef struct{
+    int numero;
+    char nome[10];
+    char tipo1[9], tipo2[9];
+    int total;
+    int hp, ataque, defesa, ataqueEspecial, defesaEspecial, velocidade;
+    int geracao;
+    bool lendario;
+    char cor[8];
+    float altura, peso;
+    int taxaCaptura;
+    bool brilhante;
+}Pokemon;
 
-    //Iniciar o SDL
-    SDL_Init(SDL_INIT_EVERYTHING);
+FILE* abreArquivo(char* nome, char* modoAbertura){
+    FILE* arq;
+    arq = fopen(nome, modoAbertura);
+    if(arq == NULL){
 
-    //Atribuição de cores para economizar memória
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); //Transparencia
+        perror("Erro ao abrir o arquivo: ");
+        exit(EXIT_FAILURE);
+    }
+    return arq;
+}
 
-    //Atributos do buffer
-    SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+void recebeDadosPokemons(Pokemon* poke){
+    FILE* arq;
+    arq = abreArquivo("pokedex.csv", "r");
+    poke = (Pokemon*) realloc(poke, 721*sizeof(Pokemon));
+    if(poke == NULL){
+        perror("Erro ao realocar a estrutura de dados dos pokemons: ");
+        exit(EXIT_FAILURE);
+    }
+    for(int i = 0 ; i < 721 ; i++){
+        fscanf(arq, "%i, %s ,%s ,%s ,%i,%i,%i,%i,%i,%i,%i,%i,%i,%s , %f , %f ,%i,%i", 
+            &poke[i].numero,
+            poke[i].nome,
+            poke[i].tipo1,
+            poke[i].tipo2,
+            &poke[i].total,
+            &poke[i].hp, 
+            &poke[i].ataque, 
+            &poke[i].defesa, 
+            &poke[i].ataqueEspecial, 
+            &poke[i].defesaEspecial, 
+            &poke[i].velocidade,
+            &poke[i].geracao,
+            &poke[i].lendario,
+            poke[i].cor,
+            &poke[i].altura,
+            &poke[i].peso,
+            &poke[i].taxaCaptura,
+            &poke[i].brilhante);
+    }
+/*
+    for(int i = 0 ; i < 721 ; i++){
+        printf("%i %s %s %s %i %i %i %i %i %i %i %i %i %s %.2f %.2f %i %i\n",
+        poke[i].numero,
+            poke[i].nome,
+            poke[i].tipo1,
+            poke[i].tipo2,
+            poke[i].total,
+            poke[i].hp, 
+            poke[i].ataque, 
+            poke[i].defesa, 
+            poke[i].ataqueEspecial, 
+            poke[i].defesaEspecial, 
+            poke[i].velocidade,
+            poke[i].geracao,
+            poke[i].lendario,
+            poke[i].cor,
+            poke[i].altura,
+            poke[i].peso,
+            poke[i].taxaCaptura,
+            poke[i].brilhante);
+    }
+*/ 
+  
+    fclose(arq);
+    return;
+}
 
-    //Criando a janela do jogo
-    SDL_Window* janela = SDL_CreateWindow("Pokemon da Shopee", //Nome da janela
-        300, 20, //Localização de onde a janela irá abrir
-        1280, 720, //Resolução da janela
-        SDL_WINDOW_OPENGL);
-    SDL_GLContext contexto = SDL_GL_CreateContext(janela); //Contexto com OpenGL
+typedef enum{
+    INSERIRTODOS = 1,
+    INSERIRGERACAO,
+    INSERIRTIPO,
+    INSERIRESPECIFICO
+}Selecao;
 
-    const int FPS = 144; //Contador de FPS
-    Uint64 start;
+void inserirTodosPokemons(Pokemon* dados, Pokemon* pokedex){
+    pokedex = (Pokemon*) realloc(dados, 721*sizeof(Pokemon));
+    if(pokedex == NULL){
+        perror("Erro ao realocar o tamanho da pokedex: ");
+        exit(EXIT_FAILURE);
+    }
+    for(int i = 0 ; i < 721 ; i++){
+        pokedex[i] = dados[i];
+    }
+    return;
+}
 
-    //Chamando imagens e criando superficies
-    SDL_Surface* cenario = IMG_Load("cenario.PNG");
-    SDL_Surface* charmander = IMG_Load("4.PNG");
-
-    //Criando texturas
-    glEnable(GL_TEXTURE_2D); // Permitir texturas em 2D
-    glEnable(GL_BLEND); 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Permitir transparência
-
-    //Cenario
-    GLuint cenariotextura;
-    glGenTextures(1, &cenariotextura);
-    glBindTexture(GL_TEXTURE_2D, cenariotextura);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cenario->w, cenario->h, 0, GL_RGB, GL_UNSIGNED_BYTE, cenario->pixels);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    SDL_FreeSurface(cenario);
-
-    //Personagem
-    GLuint charmandertextura;
-    glGenTextures(1, &charmandertextura);
-    glBindTexture(GL_TEXTURE_2D, charmandertextura);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, charmander->w, charmander->h, 0, GL_RGB, GL_UNSIGNED_BYTE, charmander->pixels);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    SDL_FreeSurface(charmander);
-
-    GLuint Animacao = charmandertextura;
-
-    //Criando eventos
-    SDL_Event Eventos;
-
-    bool moverx = false, moverx1 = false, movery = false, movery1 = false; //Movimento = 0
-    float formax = 280, formay = 270, formax1 = 26, formay1 = 35; //Personagem inicia
-    float velocidade1 = 0.6, velocidade2 = 0.6; //Velocidade de movimento do personagem
-    int con = 5; //Contador de frames
-
-    while(true){
-        while(SDL_PollEvent(&Eventos)){
-            if(Eventos.type == SDL_QUIT){ //Encerrar o jogo pelo X
-                break;
-            }
-        if(Eventos.type == SDL_KEYDOWN){
-            if(Eventos.key.keysym.sym == SDLK_ESCAPE){ //Encerrar jogo com ESC
-                break;
-            }
-            if(Eventos.key.keysym.sym == SDLK_RIGHT){ //Anda para direita
-                moverx = true;
-            }
-            if(Eventos.key.keysym.sym == SDLK_LEFT){ //Anda para esquerda
-                moverx1 = true;
-            }
-            if(Eventos.key.keysym.sym == SDLK_UP){ //Anda para cima
-                movery = true;
-            }
-            if(Eventos.key.keysym.sym == SDLK_DOWN){ //Anda para baixo
-                movery1 = true;
-            }
-        }
-        else if(Eventos.type == SDL_KEYUP){
-            if(Eventos.key.keysym.sym == SDLK_RIGHT){ //Para de andar para direita
-                moverx = false;
-            }
-            if(Eventos.key.keysym.sym == SDLK_LEFT){ //Para de andar para esquerda
-                moverx1 = false;
-            }
-            if(Eventos.key.keysym.sym == SDLK_UP){ //Para de andar para cima
-                movery = false;
-            }
-            if(Eventos.key.keysym.sym == SDLK_DOWN){ //Para de andar para baixo
-                movery1 = false;
+int contaPokemons(Pokemon* dados, int geracao, char* tipo){
+    int contador;
+    if(tipo == NULL){
+        for(int i = 0 ; i < 721 ; i++){
+            if(dados[i].geracao == geracao){
+                contador++;
             }
         }
     }
+    else{
+        for(int i = 0 ; i < 721 ; i++){
+            if(strcmp(dados[i].tipo1, tipo) == 0 || strcmp(dados[i].tipo2, tipo) == 0){
+                contador++;
+            }
+        }
+    }
+    return contador;
+}
+
+void inserirGeracaoPokemons(Pokemon* dados, Pokemon* pokedex){
+    int ger;
+    do{
+        printf("Digite qual a geração de pokemons que deseja inserir: ");
+        scanf("%i", &ger);
+        if(ger < 1 || ger > 6) printf("Digite uma geração válida (1~6)\n");
+    }while(ger < 1 || ger > 6);
+    int tam = contaPokemons(dados, ger, NULL);
+    pokedex = (Pokemon*) realloc(dados, tam*sizeof(Pokemon));
+    if(pokedex == NULL){
+        perror("Erro ao realocar o tamanho da pokedex: ");
+        exit(EXIT_FAILURE);
+    }
+    // INSERTION SORT
+    return;
+}
+
+void inserirTipoPokemons(Pokemon* dados, Pokemon* pokedex){
+    char tipo[10];
+    printf("Digite qual tipo de pokemons que deseja inserir: ");
+    setbuf(stdin, NULL);
+    fgets(tipo, 8, stdin);
+    tipo[strcspn(tipo, "\n")] = '\0';
+    int tam = contaPokemons(dados, NULL, tipo);
+    pokedex = (Pokemon*) realloc(pokedex, tam*sizeof(Pokemon));
+    if(pokedex == NULL){
+        perror("Erro ao realocar a pokedex: ");
+        exit(EXIT_FAILURE);
+    }
+    // INSERTION SORT
+    return;
+}
+
+void inserirPokemon(){
+    int selecao;
+    do{
+        printf("1) - Inserir todos pokemons.\n");
+        printf("2) - Inserir pokemons de uma geração.\n");
+        printf("3) - Inserir pokemons de um tipo.\n");
+        printf("4) - Inserir um pokemon específico.\n");
+        scanf("%i", &selecao);
+        if(selecao < 1 || selecao > 4) printf("Escolha uma opção válida.\n");
+    }while(selecao < 1 || selecao > 4);
+
+    switch(selecao){
+        case INSERIRTODOS:
+
+        case INSERIRGERACAO:
+
+        case INSERIRTIPO:
+
+        case INSERIRESPECIFICO:
+
+    }
+}
+
+/*
+Defina uma estrutura Coleção que deve armazenar a relação dos Pokémons já
+capturados, para isso armazene apenas o número(códigos). Essa relação deve
+aumentar e diminuir dinamicamente. Você deve prever o caso de Pokémons duplicados.
+O sistema deverá permitir cadastrar (inserir/listar/pesquisar/alterar/excluir) os pokémons
+já capturados.
+*/
+
+typedef struct{
     
+}Pokedex;
 
-    //Limitador de FPS
-    start = SDL_GetTicks();
-    if(1000/FPS > SDL_GetTicks()-start){
-        SDL_Delay(1000/FPS-(SDL_GetTicks()-start));
+typedef struct{
+    
+}Colecao;
 
+/*
+Defina uma estrutura Mochila que deve armazenar a relação de até 6 Pokémons já
+capturados e que poderão ser utilizados em batalha, para isso armazene apenas o
+número(códigos).
+*/
 
-    //Timer de sprites
-        if(con >= 0 && con < 60){
-            con = con + 1;
-        }
-        if(con >= 60){
-            con = con - 60;
-        }
+typedef struct{
 
-    //Limitar personagem dentro da tela
-    if(formax < 1){
-        moverx1 = false;
-    }
-    else if(formax + formax1 > 599){
-        moverx = false;
-    }
-    if(formay < 1){
-        movery = false;
-    }
-    if(formay + formay1 > 541){
-        movery1 = false;
-    }
+}Mochila;
 
-    //Mover personagem
-    if(moverx == true){
-        formax += velocidade1;
+Pokemon* retornaEstrutura(){
+    Pokemon* dados;
+    dados = (Pokemon*) malloc(sizeof(Pokemon));
+    if(dados == NULL){
+        perror("Erro ao alocar as estruturas de dados dos pokemons: ");
+        exit(EXIT_FAILURE);
     }
-    if(moverx1 == true){
-        formax -= velocidade1;
-    }
-    if(movery == true){
-        formay += velocidade2;
-    }
-    if(movery1 == true){
-        formay -= velocidade2;
+    return dados;
+}
+
+int main(void){
+
+    Pokemon* dadosPokemons;
+    dadosPokemons = retornaEstrutura();
+
+    char opcao;
+
+    printf("Sua pokedex está vazia, digite A para inserir pokemons.");
+    opcao = getchar();
+    if(opcao == 'A'){
+        inserirPokemon();
     }
 
-    //Iniciar matriz
-    glPushMatrix();
-    glOrtho( 0, //Ponto minimo de x
-    600,        //Ponto maximo de x
-    600,        //Ponto maximo de y
-    0,          //Ponto minimo de y
-    -1, 
-    1);
-
-    glBindTexture(GL_TEXTURE_2D, cenariotextura); //Textura do chão
-    glBegin(GL_QUADS);
-    {
-    glTexCoord2f(0,0); glVertex2f(0,0);
-    glTexCoord2f(1,0); glVertex2f(600,0);
-    glTexCoord2f(1,1); glVertex2f(600,550);
-    glTexCoord2f(0,1); glVertex2f(0,550);
-    glEnd();
-    }
-
-    glBindTexture(GL_TEXTURE_2D, Animacao); //Textura do personagem
-    glBegin(GL_QUADS);
-    {
-    glTexCoord2f(0,0); glVertex2f(formax,formay);
-    glTexCoord2f(1,0); glVertex2f(formax + formax1, formay);
-    glTexCoord2f(1,1); glVertex2f(formax + formax1, formay + formay1);
-    glTexCoord2f(0,1); glVertex2f(formax,formay + formay1);
-    glEnd();
-    }
-
-    glPopMatrix(); //Fecha a matriz
-
-    glClear(GL_COLOR_BUFFER_BIT);
-    SDL_GL_SwapWindow(janela);
-
-        }
-    }
-    SDL_Quit();
+    recebeDadosPokemons(dadosPokemons);
+    
+    //printf("Tamanho da pokedex: %li", sizeof(pokemons));
 
     return 0;
 }
