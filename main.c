@@ -1021,7 +1021,6 @@ int main(void){
 
     Colecao* colecao;
     colecao = retornaEstruturaColecao();
-    printf("|||%i %i |||", colecao[0].numero, colecao[0].quantidade);
 
     char opcao;
 
