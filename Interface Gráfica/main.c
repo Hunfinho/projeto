@@ -4,7 +4,7 @@
 #define QUANT 3
 #define hitboxQuantidade 24
 
-// gcc main6.c -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+// gcc main.c -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 int main(){
 
@@ -44,11 +44,13 @@ int main(){
     Vector2 posicao = {screenWidth/2.0, screenHeight/2.0+20};
     //Vector2 chatPosicao = {60, screenHeight - chatbox.height+40};
     Rectangle hitbox = {posicao.x+10, posicao.y+source.height/2.0+5, source.width-20, source.height/2.0-10};
+    // //posicao.x+10, posicao.y+source.height/2.0+5, source.width-20, source.height/2.0-10};
     Rectangle colisao1, colisao2;
-    Rectangle areaColisao1 = {-source.width, 100, 1, 45};
-    //Rectangle areaColisao2 = {screenWidth+source.width, 0, 1, 480};
-    Rectangle areaColisao2 = {screenWidth+source.width, 100, 1, 45};
-    Rectangle propHitbox[hitboxQuantidade] = {
+    //Rectangle areaColisao1 = {-source.width, 100, 1, 45};
+    Rectangle areaColisao1 = {-source.width, 110, 1, 45};
+    //Rectangle areaColisao2 = {screenWidth+source.width, 100, 1, 45};
+    Rectangle areaColisao2 = {screenWidth+source.width, 0, 1, 480};
+    Rectangle propHitboxArea1[hitboxQuantidade] = {
         {0 , 0, 196, 113},
         {196, 0, 37, 154},
         {231, 0, 125, 79},
@@ -74,26 +76,7 @@ int main(){
         {229, 182, 15, 70},
         {418, 0, 34, 27}
     };
-    /*
-    propHitbox[0] = {0 , 0, 196, 113};
-    Rectangle propHitbox2 = {196, 0, 37, 154};
-    Rectangle propHitbox3 = {231, 0, 125, 79};
-    Rectangle propHitbox4 = {357, 0, 63, 107};
-    Rectangle propHitbox5 = {265, 137, 186, 150};
-    Rectangle propHitbox6 = {0, 156, 187, 96};
-    Rectangle propHitbox7 = {451, 0, 45, 296};
-    Rectangle propHitbox8 = {495, 0, 38, 278};
-    Rectangle propHitbox9 = {533, 0, 29, 261};
-    Rectangle propHitbox10 = {390, 385, 173, 95};
-    Rectangle propHitbox11 = {125, 252, 64, 131};
-    Rectangle propHitbox12 = {0, 251, 47, 230};
-    Rectangle propHitbox13 = {46, 328, 48, 59};
-    Rectangle propHitbox14 = {47, 387, 15, 97};
-    Rectangle propHitbox15 = {63, 436, 122, 47};
-    Rectangle propHitbox16 = {245, 436, 63, 44};
-    Rectangle propHitbox17 = {495, 0, 38, 278};
-    Rectangle propHitbox18 = {248, 337, 319, 48};
-    */
+
     colisao1 = areaColisao1;
     unsigned areaSt = 1;
     Rectangle colisaoNula = {-200, -200, 0, 0};
@@ -123,10 +106,12 @@ int main(){
                 if(IsKeyDown(KEY_RIGHT)){
                     posicao.x += 10.0;
                     hitbox.x += 10.0;
-                    for(int i = 0 ; i < hitboxQuantidade ; i++){
-                        if(CheckCollisionRecs(hitbox, propHitbox[i])){
-                            posicao.x -= 10.0;
-                            hitbox.x -=10.0;
+                    if(areaSt == 1){
+                        for(int i = 0 ; i < hitboxQuantidade ; i++){
+                            if(CheckCollisionRecs(hitbox, propHitboxArea1[i])){
+                                posicao.x -= 10.0;
+                                hitbox.x -=10.0;
+                            }
                         }
                     }
                     if(frameDelayCounter > numFrames){
@@ -141,10 +126,12 @@ int main(){
                 if(IsKeyDown(KEY_LEFT)){ 
                     posicao.x -= 10.0;
                     hitbox.x -= 10.0;
-                    for(int i = 0 ; i < hitboxQuantidade ; i++){
-                        if(CheckCollisionRecs(hitbox, propHitbox[i])){
-                            posicao.x += 10.0;
-                            hitbox.x +=10.0;
+                    if(areaSt == 1){
+                        for(int i = 0 ; i < hitboxQuantidade ; i++){
+                            if(CheckCollisionRecs(hitbox, propHitboxArea1[i])){
+                                posicao.x += 10.0;
+                                hitbox.x +=10.0;
+                            }
                         }
                     }
                     if(frameDelayCounter > numFrames){
@@ -159,10 +146,12 @@ int main(){
                 if(IsKeyDown(KEY_UP)){ 
                     posicao.y -= 10.0;
                     hitbox.y -=10.0;
-                    for(int i = 0 ; i < hitboxQuantidade ; i++){
-                        if(CheckCollisionRecs(hitbox, propHitbox[i])){
-                            posicao.y += 10.0;
-                            hitbox.y +=10.0;
+                    if(areaSt == 1){
+                        for(int i = 0 ; i < hitboxQuantidade ; i++){
+                            if(CheckCollisionRecs(hitbox, propHitboxArea1[i])){
+                                posicao.y += 10.0;
+                                hitbox.y +=10.0;
+                            }
                         }
                     }
                     if(frameDelayCounter > numFrames){
@@ -177,10 +166,12 @@ int main(){
                 if(IsKeyDown(KEY_DOWN)){
                     posicao.y += 10.0;
                     hitbox.y += 10.0;
-                    for(int i = 0 ; i < hitboxQuantidade ; i++){
-                        if(CheckCollisionRecs(hitbox, propHitbox[i])){
-                            posicao.y -= 10.0;
-                            hitbox.y -=10.0;
+                    if(areaSt == 1){
+                        for(int i = 0 ; i < hitboxQuantidade ; i++){
+                            if(CheckCollisionRecs(hitbox, propHitboxArea1[i])){
+                                posicao.y -= 10.0;
+                                hitbox.y -=10.0;
+                            }
                         }
                     }
                     if(frameDelayCounter > numFrames){
@@ -199,9 +190,9 @@ int main(){
                 colisao2 = areaColisao2;
                 bgtroca = bg3;
                 posicao.x = screenWidth;
-                hitbox.x = posicao.x;
+                hitbox.x = posicao.x+10;
                 posicao.y = 115;
-                hitbox.y = posicao.y;
+                hitbox.y = posicao.y+source.height/2.0+5;
                 areaSt = 2;
                 //posicao.x+10, posicao.y+source.height/2.0+5, source.width-20, source.height/2.0-10};
             }
@@ -210,17 +201,12 @@ int main(){
                 colisao1 = areaColisao1;
                 bgtroca = bg1;
                 posicao.x = -source.width;
-                hitbox.x = posicao.x;
+                hitbox.x = posicao.x+10;
                 posicao.y = 95;
-                hitbox.y = posicao.y;
+                hitbox.y = posicao.y+source.height/2.0+5;
                 areaSt = 1;
             }
-        }
-
-        
-
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
+        }Rectangle areaColisao1 = {-source.width, 100, 1, 45};(RAYWHITE);
         DrawTexture(bgtroca, 0, 0, WHITE);
         //DrawRectangleRec(areaColisao1, BLUE);
         //DrawRectangleRec(areaColisao2, BLACK);
@@ -229,27 +215,10 @@ int main(){
             DrawTexture(npc1, screenWidth/2.0, screenHeight/2.0+100, WHITE);
             /*
             for(int i = 0 ; i < hitboxQuantidade ; i++){
-                DrawRectangleRec(propHitbox[i], BLUE);
+                DrawRectangleRec(propHitboxArea1[i], BLUE);
             }
-            /*
-            DrawRectangleRec(propHitbox2, BLUE);
-            DrawRectangleRec(propHitbox3, BLUE);
-            DrawRectangleRec(propHitbox4, BLUE);
-            DrawRectangleRec(propHitbox5, BLUE);
-            DrawRectangleRec(propHitbox6, BLUE);
-            DrawRectangleRec(propHitbox7, BLUE);
-            DrawRectangleRec(propHitbox8, BLUE);
-            DrawRectangleRec(propHitbox9, BLUE);
-            DrawRectangleRec(propHitbox10, BLUE);
-            DrawRectangleRec(propHitbox11, BLUE);
-            DrawRectangleRec(propHitbox12, BLUE);
-            DrawRectangleRec(propHitbox13, BLUE);
-            DrawRectangleRec(propHitbox14, BLUE);
-            DrawRectangleRec(propHitbox15, BLUE);
-            DrawRectangleRec(propHitbox16, BLUE);
-            DrawRectangleRec(propHitbox17, BLUE);
-            DrawRectangleRec(propHitbox18, BLUE);
-        */
+            */
+           
         }
         DrawTextureRec(animacao, source, posicao, WHITE);
         if(text){
